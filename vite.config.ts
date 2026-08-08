@@ -22,6 +22,11 @@ export default defineConfig({
           'User-Agent': 'Mozilla/5.0 (compatible; backtest-bot/1.0)',
         },
       },
+      '/api/trading': {
+        target: 'http://localhost:8787',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/trading/, '/api'),
+      },
     },
   },
 })

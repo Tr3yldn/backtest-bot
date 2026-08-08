@@ -209,3 +209,32 @@
 .scrubber-slider {
   width: 100%;
 }
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.data-table th,
+.data-table td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid #2a313c;
+}
+
+.data-table th {
+  color: #9aa4b2;
+  font-weight: 500;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.data-table .positive {
+  color: #4ecb8d;
+}
+
+.data-table .negative {
+  color: #ff6b6b;
+}
