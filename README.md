@@ -28,6 +28,13 @@ No API keys required for either of the above, and neither places real trades.
 - Place market or limit orders (buy/sell) and cancel open ones, straight from the UI
 - Requires a small local backend (see Setup below) so your API secret never reaches the browser
 
+**Auto-Trader**
+- Connects one of the five strategies to your Alpaca paper account and trades it *unattended* — no manual click per order
+- Restricted to stocks/funds (symbols that map 1:1 onto Alpaca's tradable universe)
+- Polls for a new signal on the latest candle only (never retroactively acts on older signals), checks your current position before buying/selling so it never pyramids or sells short, and enforces a configurable max-trades-per-day cap
+- Explicit arm/disarm switch, defaults to disarmed; an activity log shows every check and action
+- Only runs while the local backend process (`npm run dev:full`) is alive on your machine — it is not a 24/7 cloud bot
+
 ## Setup
 
 ```bash
@@ -52,10 +59,12 @@ To use the **Paper Trading** tab, you also need the local backend running with y
 - `src/lib/strategies.ts` — turns indicator crossovers into buy/sell signals
 - `src/lib/backtest.ts` — simulates a long-only, all-in/all-out backtest and computes stats
 - `src/lib/blackScholes.ts` + `src/lib/optionsBacktest.ts` — theoretical option pricing and the Options Lab's day-by-day simulation
-- `server/` — small Express backend that holds the Alpaca secret key server-side and proxies account/position/order requests; the browser only ever talks to `server/`, never to Alpaca directly
-- `src/lib/tradingApi.ts` — frontend client for the backend above
-- `src/components/BacktestView.tsx` / `OptionsLab.tsx` / `PaperTradingView.tsx` — the three tabs, built from shared chart/scrubber/stats components
+- `server/` — Express (TypeScript, run via `tsx`) backend that holds the Alpaca secret key server-side and proxies account/position/order requests; the browser only ever talks to `server/`, never to Alpaca directly
+  - `server/autotrader.ts` — the Auto-Trader's polling loop; imports `runStrategy` from `src/lib/strategies.ts` directly so it evaluates signals with the exact same logic shown in the Strategy Backtest tab
+  - `server/marketData.ts` — server-side candle fetcher (reuses `src/lib/yahoo.ts` with an absolute URL instead of the browser's proxied relative path)
+- `src/lib/tradingApi.ts` / `src/lib/autoTraderApi.ts` — frontend clients for the backend above
+- `src/components/BacktestView.tsx` / `OptionsLab.tsx` / `PaperTradingView.tsx` / `AutoTraderView.tsx` — the four tabs, built from shared chart/scrubber/stats/strategy-field components
 
 ## Notes
 
-Strategy Backtest and Options Lab are pure backtesting tools — no live connection, no real trades. Options pricing is model-based (Black-Scholes), not sourced from real historical option markets. Paper Trading places real orders, but only against Alpaca's simulated paper account — no real money is ever at risk through this app.
+Strategy Backtest and Options Lab are pure backtesting tools — no live connection, no real trades. Options pricing is model-based (Black-Scholes), not sourced from real historical option markets. Paper Trading and Auto-Trader place real orders, but only against Alpaca's simulated paper account — no real money is ever at risk through this app.

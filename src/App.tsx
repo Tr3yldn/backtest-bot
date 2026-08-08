@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import './App.css'
+import { AutoTraderView } from './components/AutoTraderView'
 import { BacktestView } from './components/BacktestView'
 import { OptionsLab } from './components/OptionsLab'
 import { PaperTradingView } from './components/PaperTradingView'
 
-type View = 'backtest' | 'options' | 'paper'
+type View = 'backtest' | 'options' | 'paper' | 'autotrader'
 
 function App() {
   const [view, setView] = useState<View>('backtest')
@@ -27,12 +28,16 @@ function App() {
           <button className={`tab ${view === 'paper' ? 'tab-active' : ''}`} onClick={() => setView('paper')}>
             Paper Trading
           </button>
+          <button className={`tab ${view === 'autotrader' ? 'tab-active' : ''}`} onClick={() => setView('autotrader')}>
+            Auto-Trader
+          </button>
         </nav>
       </header>
 
       {view === 'backtest' && <BacktestView />}
       {view === 'options' && <OptionsLab />}
       {view === 'paper' && <PaperTradingView />}
+      {view === 'autotrader' && <AutoTraderView />}
     </div>
   )
 }

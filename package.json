@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "server": "node server/index.mjs",
+    "server": "tsx server/index.ts",
     "dev:full": "concurrently -n web,server -c blue,green \"npm:dev\" \"npm:server\"",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
@@ -16,9 +16,11 @@
     "express": "^5.2.1",
     "lightweight-charts": "^5.2.0",
     "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react-dom": "^19.2.8",
+    "tsx": "^4.23.11"
   },
   "devDependencies": {
+    "@types/express": "^5.0.6",
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",

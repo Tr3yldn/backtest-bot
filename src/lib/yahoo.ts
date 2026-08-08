@@ -33,10 +33,20 @@ interface YahooChartResponse {
   }
 }
 
-export async function fetchYahooCandles(symbol: string, timeframeKey: string): Promise<Candle[]> {
+/**
+ * baseUrl defaults to the Vite-proxied relative path (browser use, avoids CORS).
+ * Server-side callers pass the absolute Yahoo host directly, since Node's fetch
+ * isn't subject to CORS.
+ */
+export async function fetchYahooCandles(
+  symbol: string,
+  timeframeKey: string,
+  baseUrl = '/api/yahoo',
+  headers?: Record<string, string>,
+): Promise<Candle[]> {
   const timeframe = YAHOO_TIMEFRAMES.find((t) => t.key === timeframeKey) ?? YAHOO_TIMEFRAMES[2]
-  const url = `/api/yahoo/v8/finance/chart/${encodeURIComponent(symbol)}?interval=${timeframe.interval}&range=${timeframe.range}`
-  const res = await fetch(url)
+  const url = `${baseUrl}/v8/finance/chart/${encodeURIComponent(symbol)}?interval=${timeframe.interval}&range=${timeframe.range}`
+  const res = await fetch(url, headers ? { headers } : undefined)
   if (!res.ok) {
     const body = await res.text().catch(() => '')
     throw new Error(`Yahoo Finance request failed (${res.status}): ${body.slice(0, 200)}`)
