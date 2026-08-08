@@ -8,6 +8,7 @@ import {
   type CandlestickData,
   type HistogramData,
   type IChartApi,
+  type IPriceLine,
   type ISeriesApi,
   type ISeriesMarkersPluginApi,
   type LineData,
@@ -17,22 +18,30 @@ import {
 } from 'lightweight-charts'
 import type { Candle, Signal } from '../lib/types'
 
+export interface PriceLineSpec {
+  price: number
+  color: string
+  title: string
+}
+
 interface Props {
   candles: Candle[]
   currentIndex: number
   signals: Signal[]
   indicatorSeries: Record<string, (number | null)[]>
+  priceLines?: PriceLineSpec[]
 }
 
 const INDICATOR_COLORS = ['#f0b90b', '#7c9cff', '#4ecb8d', '#ff6b6b']
 
-export function PriceChart({ candles, currentIndex, signals, indicatorSeries }: Props) {
+export function PriceChart({ candles, currentIndex, signals, indicatorSeries, priceLines }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const chartRef = useRef<IChartApi | null>(null)
   const candleSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null)
   const volumeSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null)
   const markersRef = useRef<ISeriesMarkersPluginApi<Time> | null>(null)
   const indicatorSeriesRef = useRef<Map<string, ISeriesApi<'Line'>>>(new Map())
+  const priceLinesRef = useRef<IPriceLine[]>([])
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -141,7 +150,18 @@ export function PriceChart({ candles, currentIndex, signals, indicatorSeries }: 
       text: s.type === 'buy' ? 'BUY' : 'SELL',
     }))
     markersRef.current?.setMarkers(markers)
-  }, [candles, currentIndex, signals, indicatorSeries])
+
+    priceLinesRef.current.forEach((line) => candleSeries.removePriceLine(line))
+    priceLinesRef.current = (priceLines ?? []).map((spec) =>
+      candleSeries.createPriceLine({
+        price: spec.price,
+        color: spec.color,
+        lineWidth: 1,
+        lineStyle: 2,
+        title: spec.title,
+      }),
+    )
+  }, [candles, currentIndex, signals, indicatorSeries, priceLines])
 
   return <div ref={containerRef} style={{ width: '100%', height: '440px' }} />
 }

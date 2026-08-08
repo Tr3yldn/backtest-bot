@@ -1,38 +1,56 @@
-import { GRANULARITIES, PRODUCTS } from '../lib/coinbase'
+import { ASSET_CLASSES, ASSET_CLASS_LABELS, SYMBOLS_BY_CLASS, TIMEFRAMES_BY_CLASS, type AssetClass } from '../lib/markets'
 import type { StrategyConfig, StrategyId } from '../lib/types'
 
 interface Props {
-  productId: string
-  granularity: number
+  assetClass: AssetClass
+  symbolId: string
+  timeframeKey: string
   strategyConfig: StrategyConfig
   loading: boolean
   error: string | null
-  onProductChange: (id: string) => void
-  onGranularityChange: (seconds: number) => void
+  onAssetClassChange: (assetClass: AssetClass) => void
+  onSymbolChange: (id: string) => void
+  onTimeframeChange: (key: string) => void
   onStrategyChange: (config: StrategyConfig) => void
   onLoad: () => void
 }
 
 export function Controls({
-  productId,
-  granularity,
+  assetClass,
+  symbolId,
+  timeframeKey,
   strategyConfig,
   loading,
   error,
-  onProductChange,
-  onGranularityChange,
+  onAssetClassChange,
+  onSymbolChange,
+  onTimeframeChange,
   onStrategyChange,
   onLoad,
 }: Props) {
+  const symbols = SYMBOLS_BY_CLASS[assetClass]
+  const timeframes = TIMEFRAMES_BY_CLASS[assetClass]
+
   return (
     <div className="controls">
       <div className="controls-row">
         <label>
+          Market
+          <select value={assetClass} onChange={(e) => onAssetClassChange(e.target.value as AssetClass)}>
+            {ASSET_CLASSES.map((ac) => (
+              <option key={ac} value={ac}>
+                {ASSET_CLASS_LABELS[ac]}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label>
           Symbol
-          <select value={productId} onChange={(e) => onProductChange(e.target.value)}>
-            {PRODUCTS.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.label}
+          <select value={symbolId} onChange={(e) => onSymbolChange(e.target.value)}>
+            {symbols.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.label}
               </option>
             ))}
           </select>
@@ -40,10 +58,10 @@ export function Controls({
 
         <label>
           Interval
-          <select value={granularity} onChange={(e) => onGranularityChange(Number(e.target.value))}>
-            {GRANULARITIES.map((g) => (
-              <option key={g.seconds} value={g.seconds}>
-                {g.label}
+          <select value={timeframeKey} onChange={(e) => onTimeframeChange(e.target.value)}>
+            {timeframes.map((t) => (
+              <option key={t.key} value={t.key}>
+                {t.label}
               </option>
             ))}
           </select>
@@ -58,6 +76,8 @@ export function Controls({
             <option value="sma-crossover">SMA Crossover</option>
             <option value="rsi">RSI Reversal</option>
             <option value="macd">MACD Crossover</option>
+            <option value="bollinger">Bollinger Bounce</option>
+            <option value="donchian">Donchian Breakout</option>
           </select>
         </label>
 
@@ -188,6 +208,60 @@ export function Controls({
               />
             </label>
           </>
+        )}
+
+        {strategyConfig.id === 'bollinger' && (
+          <>
+            <label>
+              Period
+              <input
+                type="number"
+                min={2}
+                max={100}
+                value={strategyConfig.bollinger.period}
+                onChange={(e) =>
+                  onStrategyChange({
+                    ...strategyConfig,
+                    bollinger: { ...strategyConfig.bollinger, period: Number(e.target.value) },
+                  })
+                }
+              />
+            </label>
+            <label>
+              Std dev multiplier
+              <input
+                type="number"
+                min={0.5}
+                max={5}
+                step={0.1}
+                value={strategyConfig.bollinger.stdDevMultiplier}
+                onChange={(e) =>
+                  onStrategyChange({
+                    ...strategyConfig,
+                    bollinger: { ...strategyConfig.bollinger, stdDevMultiplier: Number(e.target.value) },
+                  })
+                }
+              />
+            </label>
+          </>
+        )}
+
+        {strategyConfig.id === 'donchian' && (
+          <label>
+            Channel period
+            <input
+              type="number"
+              min={2}
+              max={200}
+              value={strategyConfig.donchian.period}
+              onChange={(e) =>
+                onStrategyChange({
+                  ...strategyConfig,
+                  donchian: { ...strategyConfig.donchian, period: Number(e.target.value) },
+                })
+              }
+            />
+          </label>
         )}
       </div>
 

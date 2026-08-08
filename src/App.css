@@ -14,8 +14,43 @@
 }
 
 .subtitle {
-  margin: 0;
+  margin: 0 0 14px;
   color: #9aa4b2;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.tab {
+  background: transparent;
+  color: #9aa4b2;
+  border: 1px solid #2a313c;
+  border-radius: 6px;
+  padding: 7px 14px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.tab:hover {
+  color: #e6edf3;
+}
+
+.tab-active {
+  background: #21262d;
+  color: #e6edf3;
+  border-color: #3b7cf5;
+}
+
+.options-disclaimer {
+  background: rgba(240, 185, 11, 0.1);
+  border: 1px solid rgba(240, 185, 11, 0.35);
+  color: #f0d68a;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  margin-bottom: 16px;
 }
 
 .controls {

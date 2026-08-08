@@ -14,6 +14,14 @@ export default defineConfig({
           'User-Agent': 'backtest-bot',
         },
       },
+      '/api/yahoo': {
+        target: 'https://query1.finance.yahoo.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/yahoo/, ''),
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; backtest-bot/1.0)',
+        },
+      },
     },
   },
 })

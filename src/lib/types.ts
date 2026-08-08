@@ -29,7 +29,7 @@ export interface EquityPoint {
   equity: number
 }
 
-export type StrategyId = 'sma-crossover' | 'rsi' | 'macd'
+export type StrategyId = 'sma-crossover' | 'rsi' | 'macd' | 'bollinger' | 'donchian'
 
 export interface SmaCrossoverParams {
   fastPeriod: number
@@ -48,11 +48,22 @@ export interface MacdParams {
   signalPeriod: number
 }
 
+export interface BollingerParams {
+  period: number
+  stdDevMultiplier: number
+}
+
+export interface DonchianParams {
+  period: number
+}
+
 export interface StrategyConfig {
   id: StrategyId
   smaCrossover: SmaCrossoverParams
   rsi: RsiParams
   macd: MacdParams
+  bollinger: BollingerParams
+  donchian: DonchianParams
 }
 
 export interface BacktestResult {

@@ -1,0 +1,139 @@
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { runBacktest, computeStats } from '../lib/backtest'
+import { fetchMarketCandles, SYMBOLS_BY_CLASS, TIMEFRAMES_BY_CLASS, type AssetClass } from '../lib/markets'
+import { DEFAULT_STRATEGY_CONFIG } from '../lib/strategies'
+import type { BacktestResult, Candle, StrategyConfig } from '../lib/types'
+import { Controls } from './Controls'
+import { EquityChart } from './EquityChart'
+import { PriceChart } from './PriceChart'
+import { Scrubber } from './Scrubber'
+import { StatsPanel } from './StatsPanel'
+
+function formatTime(seconds: number): string {
+  return new Date(seconds * 1000).toLocaleString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+export function BacktestView() {
+  const [assetClass, setAssetClass] = useState<AssetClass>('crypto')
+  const [symbolId, setSymbolId] = useState(SYMBOLS_BY_CLASS.crypto[0].id)
+  const [timeframeKey, setTimeframeKey] = useState(TIMEFRAMES_BY_CLASS.crypto[1].key)
+  const [strategyConfig, setStrategyConfig] = useState<StrategyConfig>(DEFAULT_STRATEGY_CONFIG)
+
+  const [candles, setCandles] = useState<Candle[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [speedMs, setSpeedMs] = useState(120)
+
+  const handleAssetClassChange = useCallback((next: AssetClass) => {
+    setAssetClass(next)
+    setSymbolId(SYMBOLS_BY_CLASS[next][0].id)
+    setTimeframeKey(TIMEFRAMES_BY_CLASS[next][TIMEFRAMES_BY_CLASS[next].length - 1].key)
+  }, [])
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    setIsPlaying(false)
+    try {
+      const data = await fetchMarketCandles(assetClass, symbolId, timeframeKey)
+      if (data.length === 0) throw new Error('No candle data returned.')
+      setCandles(data)
+      setCurrentIndex(Math.min(50, data.length - 1))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load candles.')
+    } finally {
+      setLoading(false)
+    }
+  }, [assetClass, symbolId, timeframeKey])
+
+  useEffect(() => {
+    load()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const backtestResult: BacktestResult | null = useMemo(() => {
+    if (candles.length === 0) return null
+    return runBacktest(candles, strategyConfig)
+  }, [candles, strategyConfig])
+
+  useEffect(() => {
+    if (candles.length > 0 && currentIndex > candles.length - 1) {
+      setCurrentIndex(candles.length - 1)
+    }
+  }, [candles, currentIndex])
+
+  useEffect(() => {
+    if (isPlaying && candles.length > 0 && currentIndex >= candles.length - 1) {
+      setIsPlaying(false)
+    }
+  }, [isPlaying, currentIndex, candles.length])
+
+  const stats = useMemo(() => {
+    if (!backtestResult || candles.length === 0) return null
+    return computeStats(backtestResult, currentIndex)
+  }, [backtestResult, candles, currentIndex])
+
+  return (
+    <>
+      <Controls
+        assetClass={assetClass}
+        symbolId={symbolId}
+        timeframeKey={timeframeKey}
+        strategyConfig={strategyConfig}
+        loading={loading}
+        error={error}
+        onAssetClassChange={handleAssetClassChange}
+        onSymbolChange={setSymbolId}
+        onTimeframeChange={setTimeframeKey}
+        onStrategyChange={setStrategyConfig}
+        onLoad={load}
+      />
+
+      {candles.length > 0 && backtestResult && stats && (
+        <>
+          <StatsPanel stats={stats} />
+
+          <div className="panel">
+            <PriceChart
+              candles={candles}
+              currentIndex={currentIndex}
+              signals={backtestResult.signals}
+              indicatorSeries={backtestResult.indicatorSeries}
+            />
+          </div>
+
+          <div className="panel">
+            <h3 className="panel-title">Equity Curve</h3>
+            <EquityChart equityCurve={backtestResult.equityCurve} currentIndex={currentIndex} />
+          </div>
+
+          <Scrubber
+            currentIndex={currentIndex}
+            maxIndex={candles.length - 1}
+            isPlaying={isPlaying}
+            speedMs={speedMs}
+            label={formatTime(candles[currentIndex].time)}
+            onIndexChange={setCurrentIndex}
+            onTogglePlay={() => setIsPlaying((p) => !p)}
+            onSpeedChange={setSpeedMs}
+            onReset={() => {
+              setIsPlaying(false)
+              setCurrentIndex(0)
+            }}
+          />
+        </>
+      )}
+
+      {loading && candles.length === 0 && <div className="loading-banner">Loading candles…</div>}
+    </>
+  )
+}

@@ -11,6 +11,21 @@ export const PRODUCTS: Product[] = [
   { id: 'SOL-USD', label: 'Solana / USD' },
   { id: 'DOGE-USD', label: 'Dogecoin / USD' },
   { id: 'LTC-USD', label: 'Litecoin / USD' },
+  { id: 'ADA-USD', label: 'Cardano / USD' },
+  { id: 'AVAX-USD', label: 'Avalanche / USD' },
+  { id: 'LINK-USD', label: 'Chainlink / USD' },
+  { id: 'XRP-USD', label: 'XRP / USD' },
+  { id: 'DOT-USD', label: 'Polkadot / USD' },
+  { id: 'ATOM-USD', label: 'Cosmos / USD' },
+  { id: 'BCH-USD', label: 'Bitcoin Cash / USD' },
+  { id: 'UNI-USD', label: 'Uniswap / USD' },
+  { id: 'AAVE-USD', label: 'Aave / USD' },
+  { id: 'ARB-USD', label: 'Arbitrum / USD' },
+  { id: 'OP-USD', label: 'Optimism / USD' },
+  { id: 'SHIB-USD', label: 'Shiba Inu / USD' },
+  { id: 'NEAR-USD', label: 'NEAR Protocol / USD' },
+  { id: 'ETC-USD', label: 'Ethereum Classic / USD' },
+  { id: 'FIL-USD', label: 'Filecoin / USD' },
 ]
 
 export interface Granularity {

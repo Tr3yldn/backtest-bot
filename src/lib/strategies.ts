@@ -1,5 +1,5 @@
 import type { Candle, Signal, StrategyConfig } from './types'
-import { ema, macdLine, rsi, sma } from './indicators'
+import { bollingerBands, donchianChannel, ema, macdLine, rsi, sma } from './indicators'
 
 function emaOfSeries(series: (number | null)[], period: number): (number | null)[] {
   const firstIdx = series.findIndex((v) => v !== null)
@@ -60,25 +60,67 @@ export function runStrategy(candles: Candle[], config: StrategyConfig): Strategy
     return { signals, indicatorSeries: { rsi: r } }
   }
 
-  // macd
-  const { fastPeriod, slowPeriod, signalPeriod } = config.macd
-  const { macd } = macdLine(closes, fastPeriod, slowPeriod)
-  const signalLine = emaOfSeries(macd, signalPeriod)
+  if (config.id === 'macd') {
+    const { fastPeriod, slowPeriod, signalPeriod } = config.macd
+    const { macd } = macdLine(closes, fastPeriod, slowPeriod)
+    const signalLine = emaOfSeries(macd, signalPeriod)
+    const signals: Signal[] = []
+    let inPosition = false
+    for (let i = 1; i < candles.length; i++) {
+      if (macd[i] === null || signalLine[i] === null || macd[i - 1] === null || signalLine[i - 1] === null) continue
+      const crossedUp = (macd[i - 1] as number) <= (signalLine[i - 1] as number) && (macd[i] as number) > (signalLine[i] as number)
+      const crossedDown = (macd[i - 1] as number) >= (signalLine[i - 1] as number) && (macd[i] as number) < (signalLine[i] as number)
+      if (crossedUp && !inPosition) {
+        signals.push({ index: i, type: 'buy' })
+        inPosition = true
+      } else if (crossedDown && inPosition) {
+        signals.push({ index: i, type: 'sell' })
+        inPosition = false
+      }
+    }
+    return { signals, indicatorSeries: { macd, signal: signalLine } }
+  }
+
+  if (config.id === 'bollinger') {
+    const { period, stdDevMultiplier } = config.bollinger
+    const { middle, upper, lower } = bollingerBands(closes, period, stdDevMultiplier)
+    const signals: Signal[] = []
+    let inPosition = false
+    for (let i = 1; i < candles.length; i++) {
+      if (upper[i] === null || lower[i] === null || upper[i - 1] === null || lower[i - 1] === null) continue
+      const bouncedUpFromLower = closes[i - 1] < (lower[i - 1] as number) && closes[i] >= (lower[i] as number)
+      const bouncedDownFromUpper = closes[i - 1] > (upper[i - 1] as number) && closes[i] <= (upper[i] as number)
+      if (bouncedUpFromLower && !inPosition) {
+        signals.push({ index: i, type: 'buy' })
+        inPosition = true
+      } else if (bouncedDownFromUpper && inPosition) {
+        signals.push({ index: i, type: 'sell' })
+        inPosition = false
+      }
+    }
+    return { signals, indicatorSeries: { middle, upper, lower } }
+  }
+
+  // donchian
+  const { period } = config.donchian
+  const highs = candles.map((c) => c.high)
+  const lows = candles.map((c) => c.low)
+  const { upper, lower } = donchianChannel(highs, lows, period)
   const signals: Signal[] = []
   let inPosition = false
   for (let i = 1; i < candles.length; i++) {
-    if (macd[i] === null || signalLine[i] === null || macd[i - 1] === null || signalLine[i - 1] === null) continue
-    const crossedUp = (macd[i - 1] as number) <= (signalLine[i - 1] as number) && (macd[i] as number) > (signalLine[i] as number)
-    const crossedDown = (macd[i - 1] as number) >= (signalLine[i - 1] as number) && (macd[i] as number) < (signalLine[i] as number)
-    if (crossedUp && !inPosition) {
+    if (upper[i] === null || lower[i] === null) continue
+    const breakoutUp = closes[i] > (upper[i] as number)
+    const breakoutDown = closes[i] < (lower[i] as number)
+    if (breakoutUp && !inPosition) {
       signals.push({ index: i, type: 'buy' })
       inPosition = true
-    } else if (crossedDown && inPosition) {
+    } else if (breakoutDown && inPosition) {
       signals.push({ index: i, type: 'sell' })
       inPosition = false
     }
   }
-  return { signals, indicatorSeries: { macd, signal: signalLine } }
+  return { signals, indicatorSeries: { donchianUpper: upper, donchianLower: lower } }
 }
 
 export const DEFAULT_STRATEGY_CONFIG: StrategyConfig = {
@@ -86,4 +128,6 @@ export const DEFAULT_STRATEGY_CONFIG: StrategyConfig = {
   smaCrossover: { fastPeriod: 10, slowPeriod: 30 },
   rsi: { period: 14, oversold: 30, overbought: 70 },
   macd: { fastPeriod: 12, slowPeriod: 26, signalPeriod: 9 },
+  bollinger: { period: 20, stdDevMultiplier: 2 },
+  donchian: { period: 20 },
 }

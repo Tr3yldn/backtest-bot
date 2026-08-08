@@ -65,3 +65,40 @@ export function macdLine(
   )
   return { macd, fast, slow }
 }
+
+export function bollingerBands(
+  values: number[],
+  period: number,
+  stdDevMultiplier: number,
+): { middle: (number | null)[]; upper: (number | null)[]; lower: (number | null)[] } {
+  const middle = sma(values, period)
+  const upper: (number | null)[] = new Array(values.length).fill(null)
+  const lower: (number | null)[] = new Array(values.length).fill(null)
+
+  for (let i = period - 1; i < values.length; i++) {
+    const mean = middle[i] as number
+    const window = values.slice(i - period + 1, i + 1)
+    const variance = window.reduce((sum, v) => sum + (v - mean) ** 2, 0) / period
+    const stdDev = Math.sqrt(variance)
+    upper[i] = mean + stdDevMultiplier * stdDev
+    lower[i] = mean - stdDevMultiplier * stdDev
+  }
+
+  return { middle, upper, lower }
+}
+
+export function donchianChannel(
+  highs: number[],
+  lows: number[],
+  period: number,
+): { upper: (number | null)[]; lower: (number | null)[] } {
+  const upper: (number | null)[] = new Array(highs.length).fill(null)
+  const lower: (number | null)[] = new Array(lows.length).fill(null)
+
+  for (let i = period; i < highs.length; i++) {
+    upper[i] = Math.max(...highs.slice(i - period, i))
+    lower[i] = Math.min(...lows.slice(i - period, i))
+  }
+
+  return { upper, lower }
+}
