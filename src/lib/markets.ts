@@ -1,7 +1,7 @@
-import { fetchCandles as fetchCoinbaseCandles, GRANULARITIES, PRODUCTS } from './coinbase'
-import { aggregateCandles } from './resample'
+import { fetchCandles as fetchCoinbaseCandles, PRODUCTS } from './coinbase'
+import { aggregateByCalendarPeriod, aggregateCandles } from './resample'
 import type { Candle } from './types'
-import { fetchYahooCandles, YAHOO_TIMEFRAMES } from './yahoo'
+import { fetchYahooCandles } from './yahoo'
 
 export type AssetClass = 'crypto' | 'stocks' | 'funds' | 'indices' | 'bonds' | 'futures' | 'forex'
 
@@ -89,18 +89,31 @@ export interface Timeframe {
   label: string
 }
 
-// '4h' isn't a native granularity on either data source — it's synthesized by
-// aggregating four consecutive 1h candles (see fetchMarketCandles below).
+// '4h', '1wk', and '1mo' aren't native Coinbase granularities — they're
+// synthesized from 1h/1d candles (see fetchMarketCandles below).
 const CRYPTO_TIMEFRAMES: Timeframe[] = [
-  ...GRANULARITIES.filter((g) => g.seconds <= 3600).map((g) => ({ key: String(g.seconds), label: g.label })),
+  { key: '60', label: '1m' },
+  { key: '300', label: '5m' },
+  { key: '900', label: '15m' },
+  { key: '3600', label: '1h' },
   { key: '4h', label: '4h' },
-  ...GRANULARITIES.filter((g) => g.seconds > 3600).map((g) => ({ key: String(g.seconds), label: g.label })),
+  { key: '21600', label: '6h' },
+  { key: '86400', label: '1d' },
+  { key: '1wk', label: '1w' },
+  { key: '1mo', label: '1mo' },
 ]
 
+// '4h' isn't native to Yahoo either — synthesized from 1h candles.
 const YAHOO_ASSET_TIMEFRAMES: Timeframe[] = [
-  ...YAHOO_TIMEFRAMES.filter((t) => t.key !== '1d').map((t) => ({ key: t.key, label: t.label })),
+  { key: '1m', label: '1m' },
+  { key: '5m', label: '5m' },
+  { key: '15m', label: '15m' },
+  { key: '30m', label: '30m' },
+  { key: '60m', label: '1h' },
   { key: '4h', label: '4h' },
   { key: '1d', label: '1d' },
+  { key: '1wk', label: '1w' },
+  { key: '1mo', label: '1mo' },
 ]
 
 export const TIMEFRAMES_BY_CLASS: Record<AssetClass, Timeframe[]> = {
@@ -135,6 +148,10 @@ export async function fetchMarketCandles(
     if (timeframeKey === '4h') {
       const hourly = await fetchCoinbaseCandles(symbolId, 3600, CRYPTO_CANDLE_COUNT[3600])
       return aggregateCandles(hourly, 4)
+    }
+    if (timeframeKey === '1wk' || timeframeKey === '1mo') {
+      const daily = await fetchCoinbaseCandles(symbolId, 86400, Infinity)
+      return aggregateByCalendarPeriod(daily, timeframeKey === '1wk' ? 'week' : 'month')
     }
     const granularity = Number(timeframeKey)
     return fetchCoinbaseCandles(symbolId, granularity, CRYPTO_CANDLE_COUNT[granularity] ?? 3000)

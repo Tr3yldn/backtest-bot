@@ -108,21 +108,15 @@ export function BacktestView() {
 
       {candles.length > 0 && backtestResult && stats && (
         <>
-          <StatsPanel stats={stats} />
-
-          <div className="panel">
+          <div className="panel panel-chart-main">
             <PriceChart
               candles={candles}
               currentIndex={currentIndex}
               signals={backtestResult.signals}
               indicatorSeries={backtestResult.indicatorSeries}
               enableDrawing
+              height="min(72vh, 860px)"
             />
-          </div>
-
-          <div className="panel">
-            <h3 className="panel-title">Equity Curve</h3>
-            <EquityChart equityCurve={backtestResult.equityCurve} currentIndex={currentIndex} />
           </div>
 
           <Scrubber
@@ -139,6 +133,13 @@ export function BacktestView() {
               setCurrentIndex(0)
             }}
           />
+
+          <StatsPanel stats={stats} />
+
+          <div className="panel">
+            <h3 className="panel-title">Equity Curve</h3>
+            <EquityChart equityCurve={backtestResult.equityCurve} currentIndex={currentIndex} />
+          </div>
         </>
       )}
 

@@ -33,11 +33,20 @@ interface Props {
   indicatorSeries: Record<string, (number | null)[]>
   priceLines?: PriceLineSpec[]
   enableDrawing?: boolean
+  height?: string
 }
 
 const INDICATOR_COLORS = ['#f0b90b', '#7c9cff', '#4ecb8d', '#ff6b6b']
 
-export function PriceChart({ candles, currentIndex, signals, indicatorSeries, priceLines, enableDrawing }: Props) {
+export function PriceChart({
+  candles,
+  currentIndex,
+  signals,
+  indicatorSeries,
+  priceLines,
+  enableDrawing,
+  height = '440px',
+}: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const chartRef = useRef<IChartApi | null>(null)
   const candleSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null)
@@ -292,7 +301,7 @@ export function PriceChart({ candles, currentIndex, signals, indicatorSeries, pr
           </button>
         </div>
       )}
-      <div ref={containerRef} style={{ width: '100%', height: '440px' }} />
+      <div ref={containerRef} style={{ width: '100%', height }} />
     </div>
   )
 }

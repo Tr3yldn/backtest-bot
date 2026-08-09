@@ -18,6 +18,8 @@ export const YAHOO_TIMEFRAMES: YahooTimeframe[] = [
   // still returns true daily bars, naturally clipped to the symbol's actual
   // first trade date.
   { key: '1d', label: '1d', interval: '1d', range: '100y' },
+  { key: '1wk', label: '1w', interval: '1wk', range: '100y' },
+  { key: '1mo', label: '1mo', interval: '1mo', range: '100y' },
 ]
 
 interface YahooChartResult {
