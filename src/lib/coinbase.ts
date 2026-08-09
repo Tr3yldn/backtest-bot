@@ -34,6 +34,8 @@ export interface Granularity {
 }
 
 export const GRANULARITIES: Granularity[] = [
+  { seconds: 60, label: '1m' },
+  { seconds: 300, label: '5m' },
   { seconds: 900, label: '15m' },
   { seconds: 3600, label: '1h' },
   { seconds: 21600, label: '6h' },

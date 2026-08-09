@@ -2,7 +2,9 @@ import 'dotenv/config'
 import express, { type NextFunction, type Request, type Response } from 'express'
 import { alpacaRequest, AlpacaError, isConfigured } from './alpaca.ts'
 import * as autotrader from './autotrader.ts'
-import type { AutoTraderConfig } from './autotrader.ts'
+import type { AutoTraderConfig, AutoTraderTimeframe } from './autotrader.ts'
+
+const VALID_AUTOTRADER_TIMEFRAMES: AutoTraderTimeframe[] = ['1m', '5m', '15m', '30m', '60m', '4h', '1d']
 
 const app = express()
 app.use(express.json())
@@ -97,8 +99,8 @@ app.post('/api/autotrader/config', (req, res) => {
     res.status(400).json({ message: 'symbol is required' })
     return
   }
-  if (timeframeKey !== '15m' && timeframeKey !== '60m' && timeframeKey !== '1d') {
-    res.status(400).json({ message: 'timeframeKey must be "15m", "60m", or "1d"' })
+  if (!timeframeKey || !VALID_AUTOTRADER_TIMEFRAMES.includes(timeframeKey as AutoTraderTimeframe)) {
+    res.status(400).json({ message: `timeframeKey must be one of: ${VALID_AUTOTRADER_TIMEFRAMES.join(', ')}` })
     return
   }
   if (!strategyConfig || typeof strategyConfig !== 'object') {

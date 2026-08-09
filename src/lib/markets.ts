@@ -1,4 +1,5 @@
 import { fetchCandles as fetchCoinbaseCandles, GRANULARITIES, PRODUCTS } from './coinbase'
+import { aggregateCandles } from './resample'
 import type { Candle } from './types'
 import { fetchYahooCandles, YAHOO_TIMEFRAMES } from './yahoo'
 
@@ -67,6 +68,8 @@ export const SYMBOLS_BY_CLASS: Record<AssetClass, MarketSymbol[]> = {
     { id: 'CL=F', label: 'Crude Oil Futures' },
     { id: 'GC=F', label: 'Gold Futures' },
     { id: 'SI=F', label: 'Silver Futures' },
+    { id: 'PL=F', label: 'Platinum Futures' },
+    { id: 'HG=F', label: 'Copper Futures' },
     { id: 'NG=F', label: 'Natural Gas Futures' },
     { id: 'ZC=F', label: 'Corn Futures' },
   ],
@@ -86,8 +89,19 @@ export interface Timeframe {
   label: string
 }
 
-const CRYPTO_TIMEFRAMES: Timeframe[] = GRANULARITIES.map((g) => ({ key: String(g.seconds), label: g.label }))
-const YAHOO_ASSET_TIMEFRAMES: Timeframe[] = YAHOO_TIMEFRAMES.map((t) => ({ key: t.key, label: t.label }))
+// '4h' isn't a native granularity on either data source — it's synthesized by
+// aggregating four consecutive 1h candles (see fetchMarketCandles below).
+const CRYPTO_TIMEFRAMES: Timeframe[] = [
+  ...GRANULARITIES.filter((g) => g.seconds <= 3600).map((g) => ({ key: String(g.seconds), label: g.label })),
+  { key: '4h', label: '4h' },
+  ...GRANULARITIES.filter((g) => g.seconds > 3600).map((g) => ({ key: String(g.seconds), label: g.label })),
+]
+
+const YAHOO_ASSET_TIMEFRAMES: Timeframe[] = [
+  ...YAHOO_TIMEFRAMES.filter((t) => t.key !== '1d').map((t) => ({ key: t.key, label: t.label })),
+  { key: '4h', label: '4h' },
+  { key: '1d', label: '1d' },
+]
 
 export const TIMEFRAMES_BY_CLASS: Record<AssetClass, Timeframe[]> = {
   crypto: CRYPTO_TIMEFRAMES,
@@ -107,7 +121,16 @@ export async function fetchMarketCandles(
   timeframeKey: string,
 ): Promise<Candle[]> {
   if (assetClass === 'crypto') {
+    if (timeframeKey === '4h') {
+      const hourly = await fetchCoinbaseCandles(symbolId, 3600, CANDLE_COUNT * 4)
+      return aggregateCandles(hourly, 4)
+    }
     return fetchCoinbaseCandles(symbolId, Number(timeframeKey), CANDLE_COUNT)
+  }
+
+  if (timeframeKey === '4h') {
+    const hourly = await fetchYahooCandles(symbolId, '60m')
+    return aggregateCandles(hourly, 4)
   }
   return fetchYahooCandles(symbolId, timeframeKey)
 }

@@ -8,7 +8,10 @@ export interface YahooTimeframe {
 }
 
 export const YAHOO_TIMEFRAMES: YahooTimeframe[] = [
-  { key: '15m', label: '15m', interval: '15m', range: '5d' },
+  { key: '1m', label: '1m', interval: '1m', range: '7d' },
+  { key: '5m', label: '5m', interval: '5m', range: '60d' },
+  { key: '15m', label: '15m', interval: '15m', range: '60d' },
+  { key: '30m', label: '30m', interval: '30m', range: '60d' },
   { key: '60m', label: '1h', interval: '60m', range: '60d' },
   { key: '1d', label: '1d', interval: '1d', range: '2y' },
 ]
@@ -75,4 +78,43 @@ export async function fetchYahooCandles(
   }
 
   return candles
+}
+
+export interface SymbolSearchResult {
+  symbol: string
+  name: string
+  type: string
+  exchange: string
+}
+
+interface YahooSearchQuote {
+  symbol: string
+  shortname?: string
+  longname?: string
+  typeDisp?: string
+  exchDisp?: string
+}
+
+interface YahooSearchResponse {
+  quotes?: YahooSearchQuote[]
+}
+
+export async function searchYahooSymbols(
+  query: string,
+  baseUrl = '/api/yahoo',
+  headers?: Record<string, string>,
+): Promise<SymbolSearchResult[]> {
+  if (query.trim().length === 0) return []
+  const url = `${baseUrl}/v1/finance/search?q=${encodeURIComponent(query)}&quotesCount=15&newsCount=0`
+  const res = await fetch(url, headers ? { headers } : undefined)
+  if (!res.ok) return []
+  const data = (await res.json()) as YahooSearchResponse
+  return (data.quotes ?? [])
+    .filter((q) => q.symbol)
+    .map((q) => ({
+      symbol: q.symbol,
+      name: q.longname ?? q.shortname ?? q.symbol,
+      type: q.typeDisp ?? '',
+      exchange: q.exchDisp ?? '',
+    }))
 }

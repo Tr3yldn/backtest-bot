@@ -22,7 +22,8 @@ function formatTime(seconds: number): string {
 export function BacktestView() {
   const [assetClass, setAssetClass] = useState<AssetClass>('crypto')
   const [symbolId, setSymbolId] = useState(SYMBOLS_BY_CLASS.crypto[0].id)
-  const [timeframeKey, setTimeframeKey] = useState(TIMEFRAMES_BY_CLASS.crypto[1].key)
+  const [symbolLabel, setSymbolLabel] = useState(SYMBOLS_BY_CLASS.crypto[0].label)
+  const [timeframeKey, setTimeframeKey] = useState('3600')
   const [strategyConfig, setStrategyConfig] = useState<StrategyConfig>(DEFAULT_STRATEGY_CONFIG)
 
   const [candles, setCandles] = useState<Candle[]>([])
@@ -36,7 +37,13 @@ export function BacktestView() {
   const handleAssetClassChange = useCallback((next: AssetClass) => {
     setAssetClass(next)
     setSymbolId(SYMBOLS_BY_CLASS[next][0].id)
+    setSymbolLabel(SYMBOLS_BY_CLASS[next][0].label)
     setTimeframeKey(TIMEFRAMES_BY_CLASS[next][TIMEFRAMES_BY_CLASS[next].length - 1].key)
+  }, [])
+
+  const handleSymbolChange = useCallback((id: string, label: string) => {
+    setSymbolId(id)
+    setSymbolLabel(label)
   }, [])
 
   const load = useCallback(async () => {
@@ -87,12 +94,13 @@ export function BacktestView() {
       <Controls
         assetClass={assetClass}
         symbolId={symbolId}
+        symbolLabel={symbolLabel}
         timeframeKey={timeframeKey}
         strategyConfig={strategyConfig}
         loading={loading}
         error={error}
         onAssetClassChange={handleAssetClassChange}
-        onSymbolChange={setSymbolId}
+        onSymbolChange={handleSymbolChange}
         onTimeframeChange={setTimeframeKey}
         onStrategyChange={setStrategyConfig}
         onLoad={load}
@@ -108,6 +116,7 @@ export function BacktestView() {
               currentIndex={currentIndex}
               signals={backtestResult.signals}
               indicatorSeries={backtestResult.indicatorSeries}
+              enableDrawing
             />
           </div>
 

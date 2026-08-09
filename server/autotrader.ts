@@ -3,9 +3,11 @@ import type { StrategyConfig } from '../src/lib/types.ts'
 import { alpacaRequest, AlpacaError } from './alpaca.ts'
 import { fetchCandlesForAutoTrader } from './marketData.ts'
 
+export type AutoTraderTimeframe = '1m' | '5m' | '15m' | '30m' | '60m' | '4h' | '1d'
+
 export interface AutoTraderConfig {
   symbol: string
-  timeframeKey: '15m' | '60m' | '1d'
+  timeframeKey: AutoTraderTimeframe
   strategyConfig: StrategyConfig
   qtyPerTrade: number
   maxTradesPerDay: number
@@ -18,9 +20,13 @@ interface LogEntry {
 }
 
 const MAX_LOG = 200
-const POLL_INTERVAL_MS: Record<string, number> = {
+const POLL_INTERVAL_MS: Record<AutoTraderTimeframe, number> = {
+  '1m': 30_000,
+  '5m': 60_000,
   '15m': 60_000,
+  '30m': 120_000,
   '60m': 5 * 60_000,
+  '4h': 10 * 60_000,
   '1d': 30 * 60_000,
 }
 

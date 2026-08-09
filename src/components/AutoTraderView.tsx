@@ -5,14 +5,26 @@ import {
   getAutoTraderStatus,
   setAutoTraderConfig,
   type AutoTraderStatus,
+  type AutoTraderTimeframe,
 } from '../lib/autoTraderApi'
 import { SYMBOLS_BY_CLASS } from '../lib/markets'
 import { DEFAULT_STRATEGY_CONFIG } from '../lib/strategies'
 import type { StrategyConfig } from '../lib/types'
 import { StrategyParamFields, StrategyTypeSelect } from './StrategySelectFields'
+import { SymbolSearch } from './SymbolSearch'
 
 type AutoTraderAssetClass = 'stocks' | 'funds'
-type TimeframeKey = '15m' | '60m' | '1d'
+type TimeframeKey = AutoTraderTimeframe
+
+const TIMEFRAME_OPTIONS: { key: TimeframeKey; label: string }[] = [
+  { key: '1m', label: '1m' },
+  { key: '5m', label: '5m' },
+  { key: '15m', label: '15m' },
+  { key: '30m', label: '30m' },
+  { key: '60m', label: '1h' },
+  { key: '4h', label: '4h' },
+  { key: '1d', label: '1d' },
+]
 
 function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString()
@@ -21,6 +33,7 @@ function formatTime(iso: string): string {
 export function AutoTraderView() {
   const [assetClass, setAssetClass] = useState<AutoTraderAssetClass>('stocks')
   const [symbol, setSymbol] = useState(SYMBOLS_BY_CLASS.stocks[0].id)
+  const [symbolLabel, setSymbolLabel] = useState(SYMBOLS_BY_CLASS.stocks[0].label)
   const [timeframeKey, setTimeframeKey] = useState<TimeframeKey>('1d')
   const [strategyConfig, setStrategyConfig] = useState<StrategyConfig>(DEFAULT_STRATEGY_CONFIG)
   const [qtyPerTrade, setQtyPerTrade] = useState(1)
@@ -99,6 +112,7 @@ export function AutoTraderView() {
                 const next = e.target.value as AutoTraderAssetClass
                 setAssetClass(next)
                 setSymbol(SYMBOLS_BY_CLASS[next][0].id)
+                setSymbolLabel(SYMBOLS_BY_CLASS[next][0].label)
               }}
               disabled={armed}
             >
@@ -107,23 +121,26 @@ export function AutoTraderView() {
             </select>
           </label>
 
-          <label>
-            Symbol
-            <select value={symbol} onChange={(e) => setSymbol(e.target.value)} disabled={armed}>
-              {SYMBOLS_BY_CLASS[assetClass].map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.label}
-                </option>
-              ))}
-            </select>
-          </label>
+          <SymbolSearch
+            value={symbol}
+            valueLabel={symbolLabel}
+            popular={SYMBOLS_BY_CLASS[assetClass]}
+            onSelect={(id, label) => {
+              setSymbol(id)
+              setSymbolLabel(label)
+            }}
+            disabled={armed}
+            filterTypes={['Equity', 'ETF']}
+          />
 
           <label>
             Interval
             <select value={timeframeKey} onChange={(e) => setTimeframeKey(e.target.value as TimeframeKey)} disabled={armed}>
-              <option value="15m">15m</option>
-              <option value="60m">1h</option>
-              <option value="1d">1d</option>
+              {TIMEFRAME_OPTIONS.map((tf) => (
+                <option key={tf.key} value={tf.key}>
+                  {tf.label}
+                </option>
+              ))}
             </select>
           </label>
 

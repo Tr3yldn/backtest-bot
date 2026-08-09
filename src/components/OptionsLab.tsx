@@ -5,6 +5,7 @@ import type { Candle } from '../lib/types'
 import { EquityChart } from './EquityChart'
 import { PriceChart } from './PriceChart'
 import { Scrubber } from './Scrubber'
+import { SymbolSearch } from './SymbolSearch'
 
 const UNDERLYING_ASSET_CLASSES: AssetClass[] = ['stocks', 'funds', 'indices']
 
@@ -19,6 +20,7 @@ function formatUsd(value: number): string {
 export function OptionsLab() {
   const [assetClass, setAssetClass] = useState<AssetClass>('stocks')
   const [symbolId, setSymbolId] = useState(SYMBOLS_BY_CLASS.stocks[0].id)
+  const [symbolLabel, setSymbolLabel] = useState(SYMBOLS_BY_CLASS.stocks[0].label)
   const [config, setConfig] = useState<OptionsConfig>(DEFAULT_OPTIONS_CONFIG)
 
   const [candles, setCandles] = useState<Candle[]>([])
@@ -32,6 +34,12 @@ export function OptionsLab() {
   const handleAssetClassChange = useCallback((next: AssetClass) => {
     setAssetClass(next)
     setSymbolId(SYMBOLS_BY_CLASS[next][0].id)
+    setSymbolLabel(SYMBOLS_BY_CLASS[next][0].label)
+  }, [])
+
+  const handleSymbolChange = useCallback((id: string, label: string) => {
+    setSymbolId(id)
+    setSymbolLabel(label)
   }, [])
 
   const load = useCallback(async () => {
@@ -105,16 +113,12 @@ export function OptionsLab() {
             </select>
           </label>
 
-          <label>
-            Symbol
-            <select value={symbolId} onChange={(e) => setSymbolId(e.target.value)}>
-              {SYMBOLS_BY_CLASS[assetClass].map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.label}
-                </option>
-              ))}
-            </select>
-          </label>
+          <SymbolSearch
+            value={symbolId}
+            valueLabel={symbolLabel}
+            popular={SYMBOLS_BY_CLASS[assetClass]}
+            onSelect={handleSymbolChange}
+          />
 
           <label>
             Option type

@@ -1,16 +1,18 @@
 import { ASSET_CLASSES, ASSET_CLASS_LABELS, SYMBOLS_BY_CLASS, TIMEFRAMES_BY_CLASS, type AssetClass } from '../lib/markets'
 import type { StrategyConfig } from '../lib/types'
 import { StrategyParamFields, StrategyTypeSelect } from './StrategySelectFields'
+import { SymbolSearch } from './SymbolSearch'
 
 interface Props {
   assetClass: AssetClass
   symbolId: string
+  symbolLabel: string
   timeframeKey: string
   strategyConfig: StrategyConfig
   loading: boolean
   error: string | null
   onAssetClassChange: (assetClass: AssetClass) => void
-  onSymbolChange: (id: string) => void
+  onSymbolChange: (id: string, label: string) => void
   onTimeframeChange: (key: string) => void
   onStrategyChange: (config: StrategyConfig) => void
   onLoad: () => void
@@ -19,6 +21,7 @@ interface Props {
 export function Controls({
   assetClass,
   symbolId,
+  symbolLabel,
   timeframeKey,
   strategyConfig,
   loading,
@@ -29,7 +32,6 @@ export function Controls({
   onStrategyChange,
   onLoad,
 }: Props) {
-  const symbols = SYMBOLS_BY_CLASS[assetClass]
   const timeframes = TIMEFRAMES_BY_CLASS[assetClass]
 
   return (
@@ -46,16 +48,28 @@ export function Controls({
           </select>
         </label>
 
-        <label>
-          Symbol
-          <select value={symbolId} onChange={(e) => onSymbolChange(e.target.value)}>
-            {symbols.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        {assetClass === 'crypto' ? (
+          <label>
+            Symbol
+            <select value={symbolId} onChange={(e) => {
+              const chosen = SYMBOLS_BY_CLASS.crypto.find((s) => s.id === e.target.value)
+              onSymbolChange(e.target.value, chosen?.label ?? e.target.value)
+            }}>
+              {SYMBOLS_BY_CLASS.crypto.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : (
+          <SymbolSearch
+            value={symbolId}
+            valueLabel={symbolLabel}
+            popular={SYMBOLS_BY_CLASS[assetClass]}
+            onSelect={onSymbolChange}
+          />
+        )}
 
         <label>
           Interval

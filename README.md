@@ -7,9 +7,12 @@ A local web app for backtesting trading strategies across crypto, stocks, funds/
 **Strategy Backtest**
 - Historical OHLCV price data across seven asset classes:
   - Crypto — via Coinbase's public exchange API
-  - Stocks, Funds/ETFs, Indices & Economy (VIX, yields, dollar index), Bonds (Treasury ETFs and yields), Futures, and Forex — all via Yahoo Finance
+  - Stocks, Funds/ETFs, Indices & Economy (VIX, yields, dollar index), Bonds (Treasury ETFs and yields), Futures (including metals: gold, silver, platinum, copper), and Forex — all via Yahoo Finance
+- Live symbol search (any stock/ETF/index/future/forex pair Yahoo covers, not just the curated shortlist) alongside a popular-symbols quick list
+- Timeframes from 1m up to 1d, including a synthesized 4h (aggregated from 1h candles — no free source provides native 4h bars)
 - Built-in strategies: SMA Crossover, RSI Reversal, MACD Crossover, Bollinger Bounce, Donchian Breakout — each with adjustable parameters
 - Candlestick chart with volume, indicator overlays, and buy/sell markers ([lightweight-charts](https://tradingview.github.io/lightweight-charts/))
+- Basic charting tools: trend line and rectangle (click to start, click to finish, Esc to cancel a pending draw)
 - Equity curve chart
 - Scrubber + play/pause/step controls to rewind and replay the backtest bar by bar
 - Live stats as you scrub: total return, win rate, max drawdown, trade count
@@ -63,8 +66,13 @@ To use the **Paper Trading** tab, you also need the local backend running with y
   - `server/autotrader.ts` — the Auto-Trader's polling loop; imports `runStrategy` from `src/lib/strategies.ts` directly so it evaluates signals with the exact same logic shown in the Strategy Backtest tab
   - `server/marketData.ts` — server-side candle fetcher (reuses `src/lib/yahoo.ts` with an absolute URL instead of the browser's proxied relative path)
 - `src/lib/tradingApi.ts` / `src/lib/autoTraderApi.ts` — frontend clients for the backend above
+- `src/lib/resample.ts` — aggregates N consecutive candles into one (used to synthesize the 4h timeframe)
+- `src/lib/drawingTools.ts` — trend line / rectangle chart primitives, built on lightweight-charts' plugin API
+- `src/components/SymbolSearch.tsx` — live symbol search box (Yahoo's search endpoint), used anywhere a non-crypto symbol is picked
 - `src/components/BacktestView.tsx` / `OptionsLab.tsx` / `PaperTradingView.tsx` / `AutoTraderView.tsx` — the four tabs, built from shared chart/scrubber/stats/strategy-field components
 
 ## Notes
 
 Strategy Backtest and Options Lab are pure backtesting tools — no live connection, no real trades. Options pricing is model-based (Black-Scholes), not sourced from real historical option markets. Paper Trading and Auto-Trader place real orders, but only against Alpaca's simulated paper account — no real money is ever at risk through this app.
+
+No free data source provides second-level or tick data — 1-minute candles are the finest resolution available anywhere in this app. Real-time tick data requires a paid feed (Polygon.io, IEX, etc.) and isn't wired up here.

@@ -1,8 +1,10 @@
 import type { StrategyConfig } from './types'
 
+export type AutoTraderTimeframe = '1m' | '5m' | '15m' | '30m' | '60m' | '4h' | '1d'
+
 export interface AutoTraderConfig {
   symbol: string
-  timeframeKey: '15m' | '60m' | '1d'
+  timeframeKey: AutoTraderTimeframe
   strategyConfig: StrategyConfig
   qtyPerTrade: number
   maxTradesPerDay: number
