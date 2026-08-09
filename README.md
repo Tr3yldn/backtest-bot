@@ -13,7 +13,7 @@ A local web app for backtesting trading strategies across crypto, stocks, funds/
 - Daily timeframe pulls **full available history** — decades back for long-listed stocks (all the way to IPO in many cases), full history since listing for crypto. Intraday timeframes are capped at a generous but bounded amount (unlimited 1m/5m data isn't practical to fetch or render); 1m/5m/15m/30m/1h are additionally hard-capped by Yahoo itself (7–60 days) regardless of what we request. No free source provides sub-minute (tick/second-level) data anywhere — that would require a paid feed
 - Built-in strategies: SMA Crossover, RSI Reversal, MACD Crossover, Bollinger Bounce, Donchian Breakout — each with adjustable parameters
 - Large, chart-first layout: a big candlestick chart with volume, indicator overlays, and buy/sell markers ([lightweight-charts](https://tradingview.github.io/lightweight-charts/)) — controls are compact so the chart dominates the screen, and the scrubber sits directly under it
-- Basic charting tools: trend line and rectangle (click to start, click to finish, Esc to cancel a pending draw) — more tools (Fibonacci retracement, etc.) planned
+- Charting tools: trend line, rectangle, and Fibonacci retracement (click to start, click to finish, Esc to cancel a pending draw) — Fibonacci draws the standard 0/23.6/38.2/50/61.8/78.6/100% levels with price labels
 - Equity curve chart
 - Scrubber + play/pause/step controls to rewind and replay the backtest bar by bar
 - Live stats as you scrub: total return, win rate, max drawdown, trade count

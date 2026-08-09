@@ -121,10 +121,15 @@ export function PriceChart({
     volumeSeriesRef.current = volumeSeries
 
     function pointFromEvent(param: MouseEventParams<Time>): DrawingPoint | null {
-      if (!param.time || !param.point || !candleSeriesRef.current) return null
+      if (!param.point || !candleSeriesRef.current || !chartRef.current) return null
+      // param.time is occasionally undefined on the very first click after data
+      // loads (a lightweight-charts timing quirk), even though the pixel
+      // position is valid — fall back to a direct coordinate lookup.
+      const time = param.time ?? chartRef.current.timeScale().coordinateToTime(param.point.x)
+      if (!time) return null
       const price = candleSeriesRef.current.coordinateToPrice(param.point.y)
       if (price === null) return null
-      return { time: param.time, price }
+      return { time, price }
     }
 
     function handleClick(param: MouseEventParams<Time>) {
@@ -295,6 +300,14 @@ export function PriceChart({
             title="Rectangle: click to start, click again to finish. Esc to cancel."
           >
             ▭ Rectangle
+          </button>
+          <button
+            type="button"
+            className={`btn drawing-tool-btn ${activeTool === 'fibonacci' ? 'drawing-tool-btn-active' : ''}`}
+            onClick={() => handleToolClick('fibonacci')}
+            title="Fibonacci retracement: click the swing start, click the swing end. Esc to cancel."
+          >
+            𝄒 Fib Retracement
           </button>
           <button type="button" className="btn drawing-tool-btn" onClick={clearAllDrawings} disabled={drawingCount === 0}>
             Clear {drawingCount > 0 ? `(${drawingCount})` : ''}
