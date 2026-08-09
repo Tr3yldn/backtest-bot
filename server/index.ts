@@ -3,6 +3,7 @@ import express, { type NextFunction, type Request, type Response } from 'express
 import { alpacaRequest, AlpacaError, isConfigured } from './alpaca.ts'
 import * as autotrader from './autotrader.ts'
 import type { AutoTraderConfig, AutoTraderTimeframe } from './autotrader.ts'
+import { getStrategyFeedback, isAiConfigured, type FeedbackRequest } from './ai.ts'
 
 const VALID_AUTOTRADER_TIMEFRAMES: AutoTraderTimeframe[] = ['1m', '5m', '15m', '30m', '60m', '4h', '1d']
 
@@ -139,6 +140,31 @@ app.post('/api/autotrader/disarm', (_req, res) => {
   autotrader.disarm()
   res.json(autotrader.getStatus())
 })
+
+app.get('/api/ai/status', (_req, res) => {
+  res.json({ configured: isAiConfigured() })
+})
+
+app.post(
+  '/api/ai/feedback',
+  asyncRoute(async (req, res) => {
+    const body = req.body as Partial<FeedbackRequest>
+    if (!body || !body.symbolLabel || !body.timeframeLabel || !body.stats || !Array.isArray(body.trades)) {
+      res.status(400).json({ message: 'symbolLabel, timeframeLabel, stats, and trades are required' })
+      return
+    }
+    if (body.source !== 'backtest' && body.source !== 'manual-session') {
+      res.status(400).json({ message: 'source must be "backtest" or "manual-session"' })
+      return
+    }
+    if (!isAiConfigured()) {
+      res.status(503).json({ message: 'ANTHROPIC_API_KEY is not configured on the server (add it to .env).' })
+      return
+    }
+    const feedback = await getStrategyFeedback(body as FeedbackRequest)
+    res.json({ feedback })
+  }),
+)
 
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   const status = err instanceof AlpacaError ? err.status : 500

@@ -341,3 +341,40 @@
   background: #2f6feb;
   border-color: #2f6feb;
 }
+
+.ai-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.ai-hint {
+  margin: 0;
+  color: #9aa4b2;
+  font-size: 0.85rem;
+}
+
+.ai-hint code {
+  background: #0d1117;
+  border: 1px solid #2a313c;
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+.ai-feedback-text {
+  margin: 0;
+  white-space: pre-wrap;
+  line-height: 1.5;
+  color: #e6edf3;
+  font-size: 0.9rem;
+}
+
+.direction-toggle {
+  display: flex;
+  gap: 4px;
+}
+
+.tester-trade-controls {
+  margin-top: 12px;
+}

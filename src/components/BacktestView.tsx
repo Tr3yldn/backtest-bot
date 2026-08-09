@@ -3,11 +3,21 @@ import { runBacktest, computeStats } from '../lib/backtest'
 import { fetchMarketCandles, SYMBOLS_BY_CLASS, TIMEFRAMES_BY_CLASS, type AssetClass } from '../lib/markets'
 import { DEFAULT_STRATEGY_CONFIG } from '../lib/strategies'
 import type { BacktestResult, Candle, StrategyConfig } from '../lib/types'
+import type { FeedbackRequest } from '../lib/aiApi'
+import { AiFeedbackPanel } from './AiFeedbackPanel'
 import { Controls } from './Controls'
 import { EquityChart } from './EquityChart'
 import { PriceChart } from './PriceChart'
 import { Scrubber } from './Scrubber'
 import { StatsPanel } from './StatsPanel'
+
+const STRATEGY_LABELS: Record<StrategyConfig['id'], string> = {
+  'sma-crossover': 'SMA Crossover',
+  rsi: 'RSI Reversal',
+  macd: 'MACD Crossover',
+  bollinger: 'Bollinger Bounce',
+  donchian: 'Donchian Breakout',
+}
 
 function formatTime(seconds: number): string {
   return new Date(seconds * 1000).toLocaleString(undefined, {
@@ -94,6 +104,32 @@ export function BacktestView() {
     return computeStats(backtestResult, currentIndex)
   }, [backtestResult, candles, currentIndex])
 
+  const buildFeedbackRequest = useCallback((): FeedbackRequest => {
+    const closedTrades = (backtestResult?.trades ?? []).filter((t) => t.exitIndex <= currentIndex)
+    const wins = closedTrades.filter((t) => t.returnPct > 0)
+    const losses = closedTrades.filter((t) => t.returnPct <= 0)
+    return {
+      source: 'backtest',
+      symbolLabel,
+      timeframeLabel: TIMEFRAMES_BY_CLASS[assetClass].find((t) => t.key === timeframeKey)?.label ?? timeframeKey,
+      strategyLabel: STRATEGY_LABELS[strategyConfig.id],
+      stats: {
+        totalReturnPct: stats?.totalReturnPct ?? 0,
+        winRate: stats?.winRate ?? 0,
+        tradeCount: stats?.tradeCount ?? 0,
+        maxDrawdownPct: stats?.maxDrawdownPct,
+        avgWinPct: wins.length > 0 ? wins.reduce((a, t) => a + t.returnPct, 0) / wins.length : undefined,
+        avgLossPct: losses.length > 0 ? losses.reduce((a, t) => a + t.returnPct, 0) / losses.length : undefined,
+      },
+      trades: closedTrades.map((t) => ({
+        direction: 'long',
+        entryPrice: t.entryPrice,
+        exitPrice: t.exitPrice,
+        returnPct: t.returnPct,
+      })),
+    }
+  }, [backtestResult, currentIndex, symbolLabel, assetClass, timeframeKey, strategyConfig, stats])
+
   return (
     <>
       <Controls
@@ -145,6 +181,12 @@ export function BacktestView() {
             <h3 className="panel-title">Equity Curve</h3>
             <EquityChart equityCurve={backtestResult.equityCurve} currentIndex={currentIndex} />
           </div>
+
+          <AiFeedbackPanel
+            buildRequest={buildFeedbackRequest}
+            disabled={stats.tradeCount === 0}
+            disabledReason="No closed trades yet — scrub further or pick different strategy parameters."
+          />
         </>
       )}
 
