@@ -68,9 +68,13 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
+const SAFETY_MAX_ITERATIONS = 500 // hard ceiling regardless of desiredCount, to bound worst-case request volume
+
 /**
  * Fetches historical candles by paging backward in time, since Coinbase caps
- * each request at 300 candles.
+ * each request at 300 candles. Pass `desiredCount: Infinity` to fetch the
+ * symbol's full available history — pagination naturally stops once Coinbase
+ * returns an empty chunk (i.e. we've reached its listing date).
  */
 export async function fetchCandles(
   productId: string,
@@ -79,7 +83,8 @@ export async function fetchCandles(
 ): Promise<Candle[]> {
   const chunks: RawCandle[] = []
   let endSec = Math.floor(Date.now() / 1000)
-  const maxIterations = Math.ceil(desiredCount / MAX_CANDLES_PER_REQUEST) + 2
+  const maxIterations =
+    desiredCount === Infinity ? SAFETY_MAX_ITERATIONS : Math.min(Math.ceil(desiredCount / MAX_CANDLES_PER_REQUEST) + 2, SAFETY_MAX_ITERATIONS)
 
   for (let i = 0; i < maxIterations && chunks.length < desiredCount; i++) {
     const startSec = endSec - granularitySeconds * MAX_CANDLES_PER_REQUEST
@@ -99,5 +104,5 @@ export async function fetchCandles(
   }
 
   candles.sort((a, b) => a.time - b.time)
-  return candles.slice(-desiredCount)
+  return desiredCount === Infinity ? candles : candles.slice(-desiredCount)
 }

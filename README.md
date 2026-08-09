@@ -10,6 +10,7 @@ A local web app for backtesting trading strategies across crypto, stocks, funds/
   - Stocks, Funds/ETFs, Indices & Economy (VIX, yields, dollar index), Bonds (Treasury ETFs and yields), Futures (including metals: gold, silver, platinum, copper), and Forex — all via Yahoo Finance
 - Live symbol search (any stock/ETF/index/future/forex pair Yahoo covers, not just the curated shortlist) alongside a popular-symbols quick list
 - Timeframes from 1m up to 1d, including a synthesized 4h (aggregated from 1h candles — no free source provides native 4h bars)
+- Daily timeframe pulls **full available history** — decades back for long-listed stocks (all the way to IPO in many cases), full history since listing for crypto. Intraday timeframes are capped at a generous but bounded amount (unlimited 1m/5m data isn't practical to fetch or render); 1m/5m/15m/30m/1h are additionally hard-capped by Yahoo itself (7–60 days) regardless of what we request
 - Built-in strategies: SMA Crossover, RSI Reversal, MACD Crossover, Bollinger Bounce, Donchian Breakout — each with adjustable parameters
 - Candlestick chart with volume, indicator overlays, and buy/sell markers ([lightweight-charts](https://tradingview.github.io/lightweight-charts/))
 - Basic charting tools: trend line and rectangle (click to start, click to finish, Esc to cancel a pending draw)

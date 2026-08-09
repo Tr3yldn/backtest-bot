@@ -113,7 +113,18 @@ export const TIMEFRAMES_BY_CLASS: Record<AssetClass, Timeframe[]> = {
   forex: YAHOO_ASSET_TIMEFRAMES,
 }
 
-const CANDLE_COUNT = 500
+// How much history to request per crypto granularity. Daily fetches the full
+// available history (pagination stops naturally at the symbol's Coinbase
+// listing date); intraday granularities are capped generously but boundedly —
+// unlimited 1m/5m data would mean fetching and rendering millions of candles.
+const CRYPTO_CANDLE_COUNT: Record<number, number> = {
+  60: 3000, // 1m
+  300: 3000, // 5m
+  900: 3000, // 15m
+  3600: 5000, // 1h
+  21600: 5000, // 6h
+  86400: Infinity, // 1d — full history
+}
 
 export async function fetchMarketCandles(
   assetClass: AssetClass,
@@ -122,10 +133,11 @@ export async function fetchMarketCandles(
 ): Promise<Candle[]> {
   if (assetClass === 'crypto') {
     if (timeframeKey === '4h') {
-      const hourly = await fetchCoinbaseCandles(symbolId, 3600, CANDLE_COUNT * 4)
+      const hourly = await fetchCoinbaseCandles(symbolId, 3600, CRYPTO_CANDLE_COUNT[3600])
       return aggregateCandles(hourly, 4)
     }
-    return fetchCoinbaseCandles(symbolId, Number(timeframeKey), CANDLE_COUNT)
+    const granularity = Number(timeframeKey)
+    return fetchCoinbaseCandles(symbolId, granularity, CRYPTO_CANDLE_COUNT[granularity] ?? 3000)
   }
 
   if (timeframeKey === '4h') {

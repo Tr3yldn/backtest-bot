@@ -13,7 +13,11 @@ export const YAHOO_TIMEFRAMES: YahooTimeframe[] = [
   { key: '15m', label: '15m', interval: '15m', range: '60d' },
   { key: '30m', label: '30m', interval: '30m', range: '60d' },
   { key: '60m', label: '1h', interval: '60m', range: '60d' },
-  { key: '1d', label: '1d', interval: '1d', range: '2y' },
+  // '100y' (not 'max') — Yahoo's 'max' range silently coarsens daily data to
+  // quarterly candles for long-lived symbols; a large explicit year count
+  // still returns true daily bars, naturally clipped to the symbol's actual
+  // first trade date.
+  { key: '1d', label: '1d', interval: '1d', range: '100y' },
 ]
 
 interface YahooChartResult {
