@@ -89,12 +89,15 @@ export interface Timeframe {
   label: string
 }
 
-// '4h', '1wk', and '1mo' aren't native Coinbase granularities — they're
-// synthesized from 1h/1d candles (see fetchMarketCandles below).
+// '3m', '4h', '1wk', and '1mo' aren't native Coinbase granularities, and
+// '30m' isn't either (Coinbase only accepts 60/300/900/3600/21600/86400s) —
+// all synthesized from finer candles (see fetchMarketCandles below).
 const CRYPTO_TIMEFRAMES: Timeframe[] = [
   { key: '60', label: '1m' },
+  { key: '3m', label: '3m' },
   { key: '300', label: '5m' },
   { key: '900', label: '15m' },
+  { key: '30m', label: '30m' },
   { key: '3600', label: '1h' },
   { key: '4h', label: '4h' },
   { key: '21600', label: '6h' },
@@ -103,9 +106,10 @@ const CRYPTO_TIMEFRAMES: Timeframe[] = [
   { key: '1mo', label: '1mo' },
 ]
 
-// '4h' isn't native to Yahoo either — synthesized from 1h candles.
+// '3m' and '4h' aren't native to Yahoo either — synthesized from 1m/1h candles.
 const YAHOO_ASSET_TIMEFRAMES: Timeframe[] = [
   { key: '1m', label: '1m' },
+  { key: '3m', label: '3m' },
   { key: '5m', label: '5m' },
   { key: '15m', label: '15m' },
   { key: '30m', label: '30m' },
@@ -145,6 +149,14 @@ export async function fetchMarketCandles(
   timeframeKey: string,
 ): Promise<Candle[]> {
   if (assetClass === 'crypto') {
+    if (timeframeKey === '3m') {
+      const oneMin = await fetchCoinbaseCandles(symbolId, 60, CRYPTO_CANDLE_COUNT[60])
+      return aggregateCandles(oneMin, 3)
+    }
+    if (timeframeKey === '30m') {
+      const fifteenMin = await fetchCoinbaseCandles(symbolId, 900, CRYPTO_CANDLE_COUNT[900])
+      return aggregateCandles(fifteenMin, 2)
+    }
     if (timeframeKey === '4h') {
       const hourly = await fetchCoinbaseCandles(symbolId, 3600, CRYPTO_CANDLE_COUNT[3600])
       return aggregateCandles(hourly, 4)
@@ -157,6 +169,10 @@ export async function fetchMarketCandles(
     return fetchCoinbaseCandles(symbolId, granularity, CRYPTO_CANDLE_COUNT[granularity] ?? 3000)
   }
 
+  if (timeframeKey === '3m') {
+    const oneMin = await fetchYahooCandles(symbolId, '1m')
+    return aggregateCandles(oneMin, 3)
+  }
   if (timeframeKey === '4h') {
     const hourly = await fetchYahooCandles(symbolId, '60m')
     return aggregateCandles(hourly, 4)

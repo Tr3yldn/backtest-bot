@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { fetchMarketCandles, SYMBOLS_BY_CLASS, type AssetClass } from '../lib/markets'
 import { DEFAULT_OPTIONS_CONFIG, runOptionsBacktest, type OptionsConfig, type OptionsResult } from '../lib/optionsBacktest'
 import type { Candle } from '../lib/types'
@@ -42,19 +42,24 @@ export function OptionsLab() {
     setSymbolLabel(label)
   }, [])
 
+  const requestIdRef = useRef(0)
+
   const load = useCallback(async () => {
+    const requestId = ++requestIdRef.current
     setLoading(true)
     setError(null)
     setIsPlaying(false)
     try {
       const data = await fetchMarketCandles(assetClass, symbolId, '1d')
+      if (requestIdRef.current !== requestId) return
       if (data.length === 0) throw new Error('No candle data returned.')
       setCandles(data)
       setCurrentIndex(0)
     } catch (err) {
+      if (requestIdRef.current !== requestId) return
       setError(err instanceof Error ? err.message : 'Failed to load candles.')
     } finally {
-      setLoading(false)
+      if (requestIdRef.current === requestId) setLoading(false)
     }
   }, [assetClass, symbolId])
 

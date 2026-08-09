@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { runBacktest, computeStats } from '../lib/backtest'
 import { fetchMarketCandles, SYMBOLS_BY_CLASS, TIMEFRAMES_BY_CLASS, type AssetClass } from '../lib/markets'
 import { DEFAULT_STRATEGY_CONFIG } from '../lib/strategies'
@@ -46,19 +46,24 @@ export function BacktestView() {
     setSymbolLabel(label)
   }, [])
 
+  const requestIdRef = useRef(0)
+
   const load = useCallback(async () => {
+    const requestId = ++requestIdRef.current
     setLoading(true)
     setError(null)
     setIsPlaying(false)
     try {
       const data = await fetchMarketCandles(assetClass, symbolId, timeframeKey)
+      if (requestIdRef.current !== requestId) return // a newer load superseded this one
       if (data.length === 0) throw new Error('No candle data returned.')
       setCandles(data)
       setCurrentIndex(Math.min(50, data.length - 1))
     } catch (err) {
+      if (requestIdRef.current !== requestId) return
       setError(err instanceof Error ? err.message : 'Failed to load candles.')
     } finally {
-      setLoading(false)
+      if (requestIdRef.current === requestId) setLoading(false)
     }
   }, [assetClass, symbolId, timeframeKey])
 
