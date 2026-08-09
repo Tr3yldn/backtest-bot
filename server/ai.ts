@@ -11,7 +11,7 @@ export interface TradeSummary {
   returnPct: number | null
 }
 
-export interface FeedbackRequest {
+export interface StrategyContext {
   source: 'backtest' | 'manual-session'
   symbolLabel: string
   timeframeLabel: string
@@ -27,13 +27,18 @@ export interface FeedbackRequest {
   trades: TradeSummary[]
 }
 
-const SYSTEM_PROMPT = `You are a trading strategy coach reviewing the results of a backtest or a manually recorded practice trading session inside a local backtesting tool. You are not a financial advisor and the user knows this is a hobby project — do not add disclaimers about seeking a financial advisor, and do not repeat obvious facts already shown in the stats. Give direct, specific, concrete feedback:
+export interface ChatMessage {
+  role: 'user' | 'assistant'
+  content: string
+}
 
-- 2-4 sentences on what the results actually show (be honest if the sample size is too small to conclude anything).
-- 3-5 short bullet points of concrete, actionable observations or improvement ideas grounded in the specific numbers and trades given (e.g. risk sizing, win/loss asymmetry, overtrading, drawdown, whether the trade count is even statistically meaningful).
-- Keep the whole reply under 200 words. Plain text with simple "-" bullets, no markdown headers, no tables.`
+export interface ChatRequest extends StrategyContext {
+  messages: ChatMessage[]
+}
 
-function buildPrompt(req: FeedbackRequest): string {
+const CHAT_SYSTEM_PROMPT = `You are a trading strategy coach chatting with a hobbyist inside a local backtesting tool about the results of a backtest or a manually recorded practice trading session. You are not a financial advisor and the user knows this is a hobby project — do not add disclaimers about seeking a financial advisor, and do not repeat obvious facts already shown on screen. Be direct, specific, and concrete, grounding answers in the actual stats and trades given below. Keep replies conversational and tight — a few sentences to a short paragraph per turn, longer only if the user explicitly asks for more detail. Plain text only: simple "-" bullets are fine, no markdown headers, no tables.`
+
+function buildContextBlock(req: StrategyContext): string {
   const lines: string[] = []
   lines.push(`Source: ${req.source === 'backtest' ? 'Automated strategy backtest' : 'Manually recorded practice session'}`)
   lines.push(`Symbol: ${req.symbolLabel}`)
@@ -60,18 +65,23 @@ function buildPrompt(req: FeedbackRequest): string {
   return lines.join('\n')
 }
 
-export async function getStrategyFeedback(req: FeedbackRequest): Promise<string> {
+export async function chatAboutStrategy(req: ChatRequest): Promise<string> {
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
     throw new Error('ANTHROPIC_API_KEY is not configured on the server (.env is missing it).')
   }
+  if (req.messages.length === 0) {
+    throw new Error('messages must contain at least one message.')
+  }
 
   const client = new Anthropic({ apiKey })
+  const system = `${CHAT_SYSTEM_PROMPT}\n\nContext for this conversation:\n\n${buildContextBlock(req)}`
+
   const response = await client.messages.create({
     model: 'claude-sonnet-5',
-    max_tokens: 600,
-    system: SYSTEM_PROMPT,
-    messages: [{ role: 'user', content: buildPrompt(req) }],
+    max_tokens: 700,
+    system,
+    messages: req.messages.map((m) => ({ role: m.role, content: m.content })),
   })
 
   const text = response.content

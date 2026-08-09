@@ -3,7 +3,7 @@ import express, { type NextFunction, type Request, type Response } from 'express
 import { alpacaRequest, AlpacaError, isConfigured } from './alpaca.ts'
 import * as autotrader from './autotrader.ts'
 import type { AutoTraderConfig, AutoTraderTimeframe } from './autotrader.ts'
-import { getStrategyFeedback, isAiConfigured, type FeedbackRequest } from './ai.ts'
+import { chatAboutStrategy, isAiConfigured, type ChatRequest } from './ai.ts'
 
 const VALID_AUTOTRADER_TIMEFRAMES: AutoTraderTimeframe[] = ['1m', '5m', '15m', '30m', '60m', '4h', '1d']
 
@@ -146,9 +146,9 @@ app.get('/api/ai/status', (_req, res) => {
 })
 
 app.post(
-  '/api/ai/feedback',
+  '/api/ai/chat',
   asyncRoute(async (req, res) => {
-    const body = req.body as Partial<FeedbackRequest>
+    const body = req.body as Partial<ChatRequest>
     if (!body || !body.symbolLabel || !body.timeframeLabel || !body.stats || !Array.isArray(body.trades)) {
       res.status(400).json({ message: 'symbolLabel, timeframeLabel, stats, and trades are required' })
       return
@@ -157,12 +157,16 @@ app.post(
       res.status(400).json({ message: 'source must be "backtest" or "manual-session"' })
       return
     }
+    if (!Array.isArray(body.messages) || body.messages.length === 0) {
+      res.status(400).json({ message: 'messages must be a non-empty array' })
+      return
+    }
     if (!isAiConfigured()) {
       res.status(503).json({ message: 'ANTHROPIC_API_KEY is not configured on the server (add it to .env).' })
       return
     }
-    const feedback = await getStrategyFeedback(body as FeedbackRequest)
-    res.json({ feedback })
+    const reply = await chatAboutStrategy(body as ChatRequest)
+    res.json({ reply })
   }),
 )
 

@@ -20,7 +20,7 @@ import {
   type TesterSession,
 } from '../lib/manualTester'
 import type { Candle, Signal } from '../lib/types'
-import type { FeedbackRequest } from '../lib/aiApi'
+import type { StrategyContext } from '../lib/aiApi'
 import { AiFeedbackPanel } from './AiFeedbackPanel'
 import { ManualStatsPanel } from './ManualStatsPanel'
 import { PriceChart } from './PriceChart'
@@ -232,7 +232,7 @@ export function StrategyTesterView() {
 
   const timeframeLabel = TIMEFRAMES_BY_CLASS[assetClass].find((t) => t.key === timeframeKey)?.label ?? timeframeKey
 
-  const buildFeedbackRequest = useCallback((): FeedbackRequest => {
+  const buildFeedbackRequest = useCallback((): StrategyContext => {
     const trades = session?.trades ?? []
     return {
       source: 'manual-session',

@@ -5,7 +5,7 @@ export interface TradeSummary {
   returnPct: number | null
 }
 
-export interface FeedbackRequest {
+export interface StrategyContext {
   source: 'backtest' | 'manual-session'
   symbolLabel: string
   timeframeLabel: string
@@ -19,6 +19,11 @@ export interface FeedbackRequest {
     avgLossPct?: number
   }
   trades: TradeSummary[]
+}
+
+export interface ChatMessage {
+  role: 'user' | 'assistant'
+  content: string
 }
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
@@ -37,9 +42,9 @@ export function getAiStatus(): Promise<{ configured: boolean }> {
   return request('/ai/status')
 }
 
-export function getStrategyFeedback(req: FeedbackRequest): Promise<string> {
-  return request<{ feedback: string }>('/ai/feedback', {
+export function sendCoachMessage(context: StrategyContext, messages: ChatMessage[]): Promise<string> {
+  return request<{ reply: string }>('/ai/chat', {
     method: 'POST',
-    body: JSON.stringify(req),
-  }).then((r) => r.feedback)
+    body: JSON.stringify({ ...context, messages }),
+  }).then((r) => r.reply)
 }

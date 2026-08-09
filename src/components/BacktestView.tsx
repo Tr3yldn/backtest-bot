@@ -3,7 +3,7 @@ import { runBacktest, computeStats } from '../lib/backtest'
 import { fetchMarketCandles, SYMBOLS_BY_CLASS, TIMEFRAMES_BY_CLASS, type AssetClass } from '../lib/markets'
 import { DEFAULT_STRATEGY_CONFIG } from '../lib/strategies'
 import type { BacktestResult, Candle, StrategyConfig } from '../lib/types'
-import type { FeedbackRequest } from '../lib/aiApi'
+import type { StrategyContext } from '../lib/aiApi'
 import { AiFeedbackPanel } from './AiFeedbackPanel'
 import { Controls } from './Controls'
 import { EquityChart } from './EquityChart'
@@ -104,7 +104,7 @@ export function BacktestView() {
     return computeStats(backtestResult, currentIndex)
   }, [backtestResult, candles, currentIndex])
 
-  const buildFeedbackRequest = useCallback((): FeedbackRequest => {
+  const buildFeedbackRequest = useCallback((): StrategyContext => {
     const closedTrades = (backtestResult?.trades ?? []).filter((t) => t.exitIndex <= currentIndex)
     const wins = closedTrades.filter((t) => t.returnPct > 0)
     const losses = closedTrades.filter((t) => t.returnPct <= 0)

@@ -34,10 +34,11 @@ No API keys required for either of the above, and neither places real trades.
 - The market/symbol/timeframe locks once a session has trades in it, so recorded trade indices always line up with the loaded candles — start a new session to switch markets
 
 **AI Coach (optional, bring your own Anthropic API key)**
-- A "Get AI Feedback" panel appears under both the Strategy Backtest results and the Strategy Tester's results
-- Sends your stats and trade list to Claude and gets back a short, concrete critique — not a person, not financial advice, just a second set of eyes on the numbers
-- Fully optional: with no key configured it just shows a hint instead of the button, and the rest of the app works exactly the same
-- Requires your own [Anthropic API key](https://console.anthropic.com) — this is pay-per-use billed directly to you (typically well under a cent per request at normal usage); see Setup below
+- A chat panel appears under both the Strategy Backtest results and the Strategy Tester's results — click "Get AI Feedback" for an opening critique, then keep typing follow-up questions ("why is my win rate so low?", "what would happen if I widened my stop?") and it replies in the same conversation
+- Every message is grounded in your current stats and trade list — not a person, not financial advice, just a second set of eyes on the numbers
+- "Start Over" clears the conversation so you can ask for a fresh take
+- Fully optional: with no key configured it just shows a setup hint instead of the button, and the rest of the app works exactly the same
+- Requires your own [Anthropic API key](https://console.anthropic.com) — this is pay-per-use billed directly to you (typically well under a cent per message at normal usage); see Setup below
 
 **Paper Trading**
 - Connects to your own [Alpaca](https://alpaca.markets) **paper trading** account (free, simulated $100k account — no real money)
@@ -86,12 +87,12 @@ To use the **AI Coach** ("Get AI Feedback") panel:
 - `server/` — Express (TypeScript, run via `tsx`) backend that holds the Alpaca secret key and Anthropic API key server-side; the browser only ever talks to `server/`, never to Alpaca or Anthropic directly
   - `server/autotrader.ts` — the Auto-Trader's polling loop; imports `runStrategy` from `src/lib/strategies.ts` directly so it evaluates signals with the exact same logic shown in the Strategy Backtest tab
   - `server/marketData.ts` — server-side candle fetcher (reuses `src/lib/yahoo.ts` with an absolute URL instead of the browser's proxied relative path)
-  - `server/ai.ts` — calls Claude (via `@anthropic-ai/sdk`) to turn a stats/trade summary into a short written critique for the AI Coach panel
+  - `server/ai.ts` — calls Claude (via `@anthropic-ai/sdk`) for the AI Coach panel; keeps your stats/trade summary in the system prompt and continues the conversation turn by turn
 - `src/lib/tradingApi.ts` / `src/lib/autoTraderApi.ts` / `src/lib/aiApi.ts` — frontend clients for the backend above
 - `src/lib/resample.ts` — aggregates N consecutive candles into one (used to synthesize the 4h timeframe)
 - `src/lib/drawingTools.ts` — trend line / rectangle / Fibonacci chart primitives, built on lightweight-charts' plugin API
 - `src/components/SymbolSearch.tsx` — live symbol search box (Yahoo's search endpoint), used anywhere a non-crypto symbol is picked
-- `src/components/AiFeedbackPanel.tsx` — the "Get AI Feedback" panel shared by Strategy Backtest and Strategy Tester
+- `src/components/AiFeedbackPanel.tsx` — the AI Coach chat panel shared by Strategy Backtest and Strategy Tester
 - `src/components/BacktestView.tsx` / `OptionsLab.tsx` / `StrategyTesterView.tsx` / `PaperTradingView.tsx` / `AutoTraderView.tsx` — the five tabs, built from shared chart/scrubber/stats/strategy-field components
 
 ## Notes
